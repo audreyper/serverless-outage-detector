@@ -1,0 +1,51 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Resources:
+  
+  PostsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: PostsTable
+      AttributeDefinitions:
+        - AttributeName: post_id
+          AttributeType: S
+        - AttributeName: keywords
+          AttributeType: S
+      KeySchema:
+        - AttributeName: post_id
+          KeyType: HASH 
+
+      BillingMode: PAY_PER_REQUEST
+
+      GlobalSecondaryIndexes:
+        - IndexName: KeywordsIndex
+          KeySchema:
+            - AttributeName: keywords
+              KeyType: HASH  
+          Projection:
+            ProjectionType: ALL  
+
+  BlueskyFetchPostFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: app.lambda_handler    
+      Runtime: python3.10            
+      CodeUri: .         
+      MemorySize: 128                
+      Timeout: 30 
+    
+    Connectors: 
+      MyConn:
+        Properties:
+          Destination:
+            Id: PostsTable
+          Permissions: 
+            - Read
+            - Write                
+
+Outputs:
+  BlueskyFetchPostFunctionArn:
+    Description: "ARN of the BlueskyFetchPost Lambda Function"
+    Value: !GetAtt BlueskyFetchPostFunction.Arn
+
+
